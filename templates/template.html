@@ -13,8 +13,9 @@
     </header>
     <form method=post enctype=multipart/form-data>
         <input type=file name=file>
-        <input type ="submit" name="upload" value="Upload"><br><br>
-        <a href="input_template">Input Template</a>
+        <input type ="submit" name="upload" value="Run">
+        <p><input type="checkbox" name="pass-feas-val">Pass feasible validation</p>
+        <p><a href="input_template">Input Template</a></p>
     </form>
 {% block content %}
 {% endblock %}

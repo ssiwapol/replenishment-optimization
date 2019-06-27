@@ -7,13 +7,24 @@
 <body>
     {% extends "template.html" %}
     {% block content %}
+
     <h4>Upload File</h4>
-    <p>File name: {{upload_file}}</p>
-    <p>Upload time: {{upload_time}}</p>
+    <p>File name: {{status.upload.filename}}</p>
+    <p>Upload time: {{status.upload.upload_time}}</p>
+
     <h4>Validate</h4>
-    <p>Sheets/columns: {{sheet_status}}</p>
-    <p>Master data:  <font color="red">{{master_status}}</font></p>
-    <p>Feasible: {{feas_status}}</p>
+    <p>Sheets/columns: {{error_summary.sheet}}</p>
+    <p>Master data: <font color="red">{{error_summary.master}}</font></p>
+    <p>Feasible: </p>
+    <p>Feasible detail: </p>
+
+    <h4>Optimization</h4>
+    <p>Start time: </p>
+    <p>End time: </p>
+    <p>Total time (secs): </p>
+    <p>Solve status: </p>
+    <p>Output file: </p>
+    <p>Table output: </p>
     {% endblock %}
 </body>
 </html>
