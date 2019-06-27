@@ -1,6 +1,6 @@
 # Replenishment optimization for VMI system
 
-## Install
+## Install (Windows)
 - [Python>=3.6](https://www.python.org/)
 - install.bat (install related libraries)
 - run.bat (run app in http://localhost:5000/)
@@ -20,8 +20,9 @@ Constraints:
 - Supply available at plant
 - Minimum inventory at customer
 - Available plants for each customer
-- Available products for each truck
+- Available plants for each truck
 - Minimum volume at each truck
+- Minimum weight at each truck
 - Minimum price at each truck
 - Minimum cost at each truck
 - Maximum volume at each truck
