@@ -1,9 +1,10 @@
 # Replenishment optimization for VMI system
 
-## Install (Windows)
+## Install
 - [Python>=3.6](https://www.python.org/)
-- install.bat (install related libraries)
-- run.bat (run app in http://localhost:5000/)
+- pip install -r requirements.txt
+- run.bat (windows) / app.py (linux)
+- app will run in http://localhost:5000/
 - home.url
 - Download "Input Template.xlsx" and input data
 - Upload file to web browser
