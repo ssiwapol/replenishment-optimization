@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Replenishment Optimization</title>
+</head>
+<body>
+    <h4>Table: {{tablename}}</h4>
+    <p>Download file: <a href="downloadsheet/{{tablename}}">{{tablename}}</a></p>
+    {% for table in df %}
+            {{ table|safe }}
+    {% endfor %}
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Replenishment Optimization</title>
+</head>
+<body>
+    {% extends "template.html" %}
+    {% block content %}
+    <h4>Upload File</h4>
+    <p>File name: {{upload_file}}</p>
+    <p>Upload time: {{upload_time}}</p>
+    <h4>Validate</h4>
+    <p>Sheets/columns: {{sheet_status}}</p>
+    <p>Master data: {{master_status}}</p>
+    <p>Feasible: {{feas_status}}</p>
+    <p>Feasible detail: <a href="download/error.xlsx">error.xlsx</a></p>
+    <form method=post enctype=multipart/form-data>
+        <input type ="submit" name="solve" value="Solve">
+    </form>
+    <h4>Optimization</h4>
+    <p>Start time: {{opt_start}}</p>
+    <p>End time: {{opt_end}}</p>
+    <p>Total time (secs): {{opt_time}}</p>
+    <p>Solve status: {{opt_status}}</p>
+    <p>Output file: <a href="download/output.xlsx">output.xlsx</a></p>
+    <p>Table output:
+        <a href="output/trans" target="_blank">trans</a>,
+        <a href="output/custtruck" target="_blank">custtruck</a>,
+        <a href="output/custmat" target="_blank">custmat</a>,
+        <a href="output/order" target="_blank">order</a></p>
+    {% endblock %}
+</body>
+</html>
