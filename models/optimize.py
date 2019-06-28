@@ -6,14 +6,40 @@ import pandas as pd
 import numpy as np
 import json
 from ortools.linear_solver import pywraplp
+from io import BytesIO
+from pytz import timezone
+from google.cloud import storage
 
-class Optimize:
+class SetPath:
+    def __init__(self, gcs_bucket, gcs_path, serviceauth=None):
+        self.gcs_bucket = gcs_bucket
+        self.gcs_path = gcs_path
+        self.serviceauth = serviceauth
 
-    def __init__(self, file, request):
-        self.file = file
-        self.request = request
-        self.status = {}
+    def upload_gcs(self, file, filename):
+        if self.serviceauth==None:
+            client = storage.Client()
+        else:
+            client = storage.Client.from_service_account_json(self.serviceauth)
+        bucket = client.get_bucket(self.gcs_bucket)
+        fullpath = "%s/%s" % (self.gcs_path, filename)
+        blob = storage.Blob(fullpath, bucket)
+        blob.upload_from_file(file)
 
+    def download_gcs(self, filename):
+        if self.serviceauth==None:
+            client = storage.Client()
+        else:
+            client = storage.Client.from_service_account_json(self.serviceauth)
+        bucket = client.get_bucket(self.gcs_bucket)
+        fullpath = "%s/%s" % (self.gcs_path, filename)
+        blob = storage.Blob(fullpath, bucket)
+        byte_stream = BytesIO()
+        blob.download_to_file(byte_stream)
+        byte_stream.seek(0)
+        return byte_stream
+
+class Optimize(SetPath):
     @staticmethod
     def makedict(df, id_col, val_col, crossproduct, replace_str=0, null_val=0):
         df_dict = pd.Series(df[val_col].values, index=df[id_col]).to_dict()
@@ -40,10 +66,13 @@ class Optimize:
             worksheet.write(row, 1, val)
             row += 1
 
-    def upload_file(self):
+    def upload_file(self, file, request):
+        self.status = {}
+        self.file = file
+        self.request = request
         self.status['upload'] = {}
         self.status['upload']['filename'] = self.file.filename
-        self.status['upload']['upload_time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.status['upload']['upload_time'] = datetime.datetime.now(timezone('Asia/Bangkok')).strftime("%Y-%m-%d %H:%M:%S")
         self.status['upload']['upload_ip'] = self.request.remote_addr
         self.input_status = self.status['upload']
         return self.status['upload']
@@ -165,8 +194,9 @@ class Optimize:
     def validate_feas(self):
         self.status['val_feas'] = {}
 
-        # set path to write file
-        writer = pd.ExcelWriter(os.path.join("./tmp", 'error.xlsx'), engine='xlsxwriter')
+        # write file to BytesIO
+        output_file = BytesIO()
+        writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
 
         # write input information
         self.write_dict_to_worksheet(self.input_status, "input", writer.book)
@@ -255,7 +285,13 @@ class Optimize:
         else:
             self.status['val_feas']['custtruck'] = 1
         df_feas_custtruck.to_excel(writer, sheet_name='feas_custtruck', index=False)
+
+        # write file to path
         writer.save()
+        output_file.seek(0)
+        #with open(os.path.join(self.tmppath, 'error.xlsx'), 'wb') as f:
+        #    f.write(output_file.read())
+        self.upload_gcs(output_file, 'error.xlsx')
 
         return self.status['val_feas']
 
@@ -264,7 +300,7 @@ class Optimize:
         self.status['optimize'] = {}
 
         '''Start optimization'''
-        start_time = datetime.datetime.now()
+        start_time = datetime.datetime.now(timezone('Asia/Bangkok'))
         self.status['optimize']['start_time'] = start_time.strftime("%Y-%m-%d %H:%M:%S")
         solver = pywraplp.Solver('Fulfillment Optimization', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
@@ -567,29 +603,21 @@ class Optimize:
         df_order_output = df_order_output.sort_values(by=['order_priority']).reset_index(drop=True)
 
         # export output data to excel
-        writer = pd.ExcelWriter(os.path.join("./tmp", 'output.xlsx'), engine='xlsxwriter')
+        output_file = BytesIO()
+        writer = pd.ExcelWriter(output_file, engine='xlsxwriter')
         self.write_dict_to_worksheet(self.input_status, "input", writer.book)
         df_trans.to_excel(writer, sheet_name='trans', index=False)
         df_custtruck_output.to_excel(writer, sheet_name='custtruck', index=False)
         df_custmat_output.to_excel(writer, sheet_name='custmat', index=False)
         df_order_output.to_excel(writer, sheet_name='order', index=False)
         writer.save()
-
-        '''
-        else:
-            #write blank file
-            writer = pd.ExcelWriter(os.path.join("./tmp", 'output.xlsx'), engine='xlsxwriter')
-            self.write_dict_to_worksheet(self.input_status, "input", writer.book)
-
-            df_trans.to_excel(writer, sheet_name='trans', index=False)
-            df_custtruck_output.to_excel(writer, sheet_name='custtruck', index=False)
-            df_custmat_output.to_excel(writer, sheet_name='custmat', index=False)
-            df_order_output.to_excel(writer, sheet_name='order', index=False)
-            writer.save()
-        '''
+        output_file.seek(0)
+        #with open(os.path.join(self.tmppath, 'output.xlsx'), 'wb') as f:
+        #    f.write(output_file.read())
+        self.upload_gcs(output_file, 'output.xlsx')
 
         # summarize time
-        end_time = datetime.datetime.now()
+        end_time = datetime.datetime.now(timezone('Asia/Bangkok'))
 
         self.status['optimize']['end_time'] = end_time.strftime("%Y-%m-%d %H:%M:%S")
         self.status['optimize']['total_time'] = (end_time - start_time).total_seconds()

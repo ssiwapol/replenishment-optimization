@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -10,12 +9,15 @@ os.chdir(os.path.dirname(os.path.realpath(__file__)))
 
 app = Flask(__name__)
 ALLOWED_EXTENSIONS = ['xlsx', 'xlsb', 'xlsm', 'xls']
-TMP_DIR = "./tmp"
+GCS_BUCKET = "zqa-scg-cbm-bpd-ba.appspot.com"
+GCS_PATH = "replenishment-optimization"
+SERVICE_AUTH = None
+path = optimize.SetPath(GCS_BUCKET, GCS_PATH, SERVICE_AUTH)
 
 @app.route('/', methods=("POST", "GET"))
 @app.route('/index', methods=("POST", "GET"))
 def home():
-    #click upload
+    opt = optimize.Optimize(GCS_BUCKET, GCS_PATH, SERVICE_AUTH)
     if 'upload' in request.form:
         if 'file' not in request.files:
             return redirect(request.url)
@@ -23,8 +25,7 @@ def home():
             f = request.files['file']
             if f.filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS: # check extension
                 error_summary = {}
-                opt = optimize.Optimize(f, request)
-                upload_status = opt.upload_file()
+                upload_status = opt.upload_file(f, request)
                 sheet_status = opt.validate_sheet()
                 sheet_error = [x for x, val in sheet_status.items() if val == 0]
                 error_summary['sheet'] = 'OK' if len(sheet_error) == 0 else "ERROR sheets (%s)" % (', '.join(sheet_error))
@@ -53,10 +54,18 @@ def home():
     else:
         return render_template('home.html')
 
+@app.route("/input_template", methods=['GET', 'POST'])
+def input_template():
+    return send_file('./models/input_template.xlsx', attachment_filename='input_template.xlsx', as_attachment=True, cache_timeout=0)
+
+@app.route("/download/<filename>", methods=['GET', 'POST'])
+def download(filename):
+    return send_file(path.download_gcs(filename), attachment_filename=filename, as_attachment=True, cache_timeout=0)
+
 @app.route("/output/<tablename>", methods=['GET', 'POST'])
 def output(tablename):
     dtype = {"plant": str, "truck": str, "cust": str, "mat": str}
-    df = pd.read_excel(os.path.join(TMP_DIR, 'output.xlsx'), sheet_name=tablename, dtype=dtype)
+    df = pd.read_excel(path.download_gcs('output.xlsx'), sheet_name=tablename, dtype=dtype)
     col_transform = ['trans_total_vol', 'trans_total_weight', 'trans_total_price', 'trans_total_cost', 'trans_total_ratio',
                      'sales_qty', 'dos_per_lot', 'dos_per_unit', 'dos_before', 'dos_after']
     for x in col_transform:
@@ -68,19 +77,11 @@ def output(tablename):
                            tablename=tablename,
                            df=[df.to_html(classes='output', index=False)])
 
-@app.route("/input_template", methods=['GET', 'POST'])
-def input_template():
-    return send_file('./models/input_template.xlsx', attachment_filename='input_template.xlsx', as_attachment=True, cache_timeout=0)
-
-@app.route("/download/<filename>", methods=['GET', 'POST'])
-def download(filename):
-    return send_file(os.path.join(TMP_DIR, filename), attachment_filename=filename, as_attachment=True, cache_timeout=0)
-
 @app.route("/output/downloadsheet/<tablename>", methods=['GET', 'POST'])
 def downloadsheet(tablename):
     #get table
     dtype = {"plant": str, "truck": str, "cust": str, "mat": str}
-    df = pd.read_excel(os.path.join(TMP_DIR, 'output.xlsx'), sheet_name=tablename, dtype=dtype)
+    df = pd.read_excel(path.download_gcs('output.xlsx'), sheet_name=tablename, dtype=dtype)
     #save to bytes
     output = BytesIO()
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
@@ -91,4 +92,5 @@ def downloadsheet(tablename):
     return send_file(output, attachment_filename=filename, as_attachment=True, cache_timeout=0)
 
 if __name__ == '__main__':
-    app.run(port=5000, debug=True)
+    #app.run(port=5000, debug=True)
+    app.run(host='0.0.0.0', port=8080, debug=False)

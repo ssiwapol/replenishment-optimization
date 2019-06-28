@@ -1,15 +1,7 @@
 # Replenishment optimization for VMI system
 
-## Install
-- [Python>=3.6](https://www.python.org/)
-- pip install -r requirements.txt
-- run.bat (windows) / app.py (linux)
-- app will run in http://localhost:5000/
-- home.url
-- Download "Input Template.xlsx" and input data
-- Upload file to web browser
-- Solve the problem (only if file passes validation process)
-- See result and output
+## Deploy in Google App Engine
+gcloud app deploy app.yaml --project [PROJECT_NAME]
 
 ## Optimization Model
 
@@ -23,7 +15,6 @@ Constraints:
 - Available plants for each customer
 - Available plants for each truck
 - Minimum volume at each truck
-- Minimum weight at each truck
 - Minimum price at each truck
 - Minimum cost at each truck
 - Maximum volume at each truck
