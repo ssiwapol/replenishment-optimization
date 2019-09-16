@@ -4,20 +4,20 @@ import os
 import datetime
 import pandas as pd
 import numpy as np
-import json
 from ortools.linear_solver import pywraplp
 from io import BytesIO
 
+import mod
 
-class SetPath:
-    def __init__(self, tmppath):
-        self.tmppath = tmppath
-
-    def path(self):
-        return self.tmppath
+p = mod.PathFile()
 
 
-class Optimize(SetPath):
+class Optimize():
+    def __init__(self, user):
+        self.user = user
+        p.setuser(self.user)
+        self.stream = False if p.config['app']['run'] == 'local' else True
+
     @staticmethod
     def makedict(df, id_col, val_col, crossproduct, replace_str=0, null_val=0):
         df_dict = pd.Series(df[val_col].values, index=df[id_col]).to_dict()
@@ -51,6 +51,7 @@ class Optimize(SetPath):
         self.status = {}
         self.status['upload'] = {}
         self.status['upload']['filename'] = self.file.filename
+        self.status['upload']['user'] = self.user
         self.status['upload']['upload_time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.status['upload']['upload_ip'] = self.request.remote_addr
         self.input_status = self.status['upload']
@@ -320,8 +321,7 @@ class Optimize(SetPath):
         # write file to path
         writer.save()
         output_file.seek(0)
-        with open(os.path.join(self.tmppath, 'error.xlsx'), 'wb') as f:
-            f.write(output_file.read())
+        p.savefile(output_file, p.config['file']['error'])
 
         return self.status['val_feas']
 
@@ -705,8 +705,7 @@ class Optimize(SetPath):
         df_order_output.to_excel(writer, sheet_name='order', index=False)
         writer.save()
         output_file.seek(0)
-        with open(os.path.join(self.tmppath, 'output.xlsx'), 'wb') as f:
-            f.write(output_file.read())
+        p.savefile(output_file, p.config['file']['output'])
 
         # summarize time
         end_time = datetime.datetime.now()

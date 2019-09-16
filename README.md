@@ -3,9 +3,10 @@
 ## Install
 - [Python>=3.6](https://www.python.org/)
 - pip install -r requirements.txt
-- run.bat (windows) / app.py (linux)
-- app will run in http://localhost:5000/
-- home.url
+- create config.yaml file
+- python main.py
+- http://localhost:8080/
+- Input user and password
 - Download "Input Template.xlsx" and input data
 - Upload file to web browser
 - Solve the problem (only if file passes validation process)
