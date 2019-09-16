@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-
-import os
 import datetime
+from pytz import timezone
 import pandas as pd
 import numpy as np
 from ortools.linear_solver import pywraplp
@@ -52,7 +51,8 @@ class Optimize():
         self.status['upload'] = {}
         self.status['upload']['filename'] = self.file.filename
         self.status['upload']['user'] = self.user
-        self.status['upload']['upload_time'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.status['upload']['upload_time'] = datetime.datetime.now(
+            timezone('Asia/Bangkok')).strftime("%Y-%m-%d %H:%M:%S")
         self.status['upload']['upload_ip'] = self.request.remote_addr
         self.input_status = self.status['upload']
         return self.status['upload']
@@ -330,7 +330,7 @@ class Optimize():
         self.status['optimize'] = {}
 
         '''Start optimization'''
-        start_time = datetime.datetime.now()
+        start_time = datetime.datetime.now(timezone('Asia/Bangkok'))
         self.status['optimize']['start_time'] = start_time.strftime("%Y-%m-%d %H:%M:%S")
         solver = pywraplp.Solver('Fulfillment Optimization',
                                  pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
@@ -708,7 +708,7 @@ class Optimize():
         p.savefile(output_file, p.config['file']['output'])
 
         # summarize time
-        end_time = datetime.datetime.now()
+        end_time = datetime.datetime.now(timezone('Asia/Bangkok'))
 
         self.status['optimize']['end_time'] = end_time.strftime("%Y-%m-%d %H:%M:%S")
         self.status['optimize']['total_time'] = (end_time - start_time).total_seconds()
